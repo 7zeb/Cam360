@@ -1,6 +1,15 @@
 plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom' version '1.7-SNAPSHOT'
 }
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = "https://maven.fabricmc.net/" }
+        mavenCentral()
+    }
+}
+
 
 group = 'com.360cam'
 version = '1.0.0'
