@@ -31,5 +31,5 @@ jobs:
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 360cam-jar
+          name: cam360-jar
           path: build/libs/*.jar
