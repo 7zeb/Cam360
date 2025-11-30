@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "id": "360cam",
-  "version": "1.0.0",
-  "name": "360cam",
+  "id": "cam360",
+  "version": "1.2.0",
+  "name": "cam360",
   "description": "Press a key to capture 360° screenshots in Minecraft.",
   "authors": ["7Zeb"],
   "environment": "client",
   "entrypoints": {
-    "client": ["com.360cam.Cam360"]
+    "client": ["com.cam360.Cam360"]
   },
   "depends": {
     "fabricloader": ">=0.14.0",
