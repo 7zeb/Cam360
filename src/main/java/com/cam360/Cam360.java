@@ -1,6 +1,6 @@
 package com.cam360;
 
-import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -12,16 +12,16 @@ import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
 
-public class Cam360 implements ModInitializer {
+public class Cam360 implements ClientModInitializer {
     private static KeyBinding captureKey;
 
     @Override
-    public void onInitialize() {
+    public void onInitializeClient() {
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.360cam.capture",
+            "key.cam360.capture",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_F9,
-            "category.360cam"
+            "category.cam360"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -29,6 +29,8 @@ public class Cam360 implements ModInitializer {
                 capture360(client);
             }
         });
+
+        System.out.println("[Cam360] Client-side mod initialized!");
     }
 
     private void capture360(MinecraftClient client) {
@@ -38,17 +40,13 @@ public class Cam360 implements ModInitializer {
         File folder = new File(client.runDirectory, "screenshots360");
         if (!folder.exists()) folder.mkdirs();
 
-    for (int i = 0; i < 8; i++) { // 8 shots = 45° increments
-    float newYaw = originalYaw + (i * 45);
-    client.player.setYaw(newYaw);
+        for (int i = 0; i < 8; i++) { // 8 shots = 45° increments
+            float newYaw = originalYaw + (i * 45);
+            client.player.setYaw(newYaw);
 
-    String filename = "360_" + System.currentTimeMillis() + "_" + i + ".png";
-    ScreenshotRecorder.saveScreenshot(folder, filename, client.getFramebuffer(), text -> {});
-}
-
-client.player.setYaw(originalYaw);
-
-
+            String filename = "360_" + System.currentTimeMillis() + "_" + i + ".png";
+            ScreenshotRecorder.saveScreenshot(folder, filename, client.getFramebuffer(), text -> {});
+        }
 
         client.player.setYaw(originalYaw);
     }
