@@ -7,4 +7,4 @@ pluginManagement {
 }
 
 
-rootProject.name = "360Cam"
+rootProject.name = "cam360"
