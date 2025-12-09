@@ -1,9 +1,9 @@
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'fabric-loom' version '1.10.1'
 }
 
 group = 'com.cam360'
-version = '1.0.0'
+version = '1.5.0'
 
 repositories {
     mavenCentral()
