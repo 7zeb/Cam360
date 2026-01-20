@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "cam360",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "name": "cam360",
   "description": "Press a key to capture 360° screenshots in Minecraft.",
   "authors": ["7Zeb"],
