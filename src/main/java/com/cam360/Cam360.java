@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Cam360 implements ClientModInitializer {
+
     private static KeyBinding captureKey;
 
     private boolean capturing = false;
@@ -28,6 +29,7 @@ public class Cam360 implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.cam360.capture",
                 InputUtil.Type.KEYSYM,
@@ -45,21 +47,22 @@ public class Cam360 implements ClientModInitializer {
             if (!capturing || yawIterator == null) return;
 
             if (!waitingForFrame) {
-                // Step 1: rotate player this tick
+                // Rotate player this tick
                 if (yawIterator.hasNext()) {
                     float newYaw = yawIterator.next();
                     client.player.setYaw(newYaw);
-                    waitingForFrame = true; // next tick we capture
+                    waitingForFrame = true; // next tick we screenshot
                 } else {
-                    // Done
+                    // Done capturing
                     client.player.setYaw(originalYaw);
                     capturing = false;
                     yawIterator = null;
                     shotIndex = 0;
                     client.player.sendMessage(Text.literal("Captured 360° screenshots!"), false);
                 }
+
             } else {
-                // Step 2: capture screenshot on the next tick (after camera updates)
+                // Next tick: take screenshot
                 takeScreenshot(client);
                 waitingForFrame = false;
             }
@@ -72,11 +75,12 @@ public class Cam360 implements ClientModInitializer {
         if (capturing || client.player == null) return;
 
         originalYaw = client.player.getYaw();
+
         folder = new File(client.runDirectory, "screenshots360");
         if (!folder.exists()) folder.mkdirs();
 
         List<Float> yawSteps = new ArrayList<>();
-        int steps = 8; // 8 shots = every 45°
+        int steps = 8; // 8 shots = every 45 degrees
         for (int i = 0; i < steps; i++) {
             yawSteps.add(originalYaw + (i * 45.0f));
         }
@@ -92,15 +96,18 @@ public class Cam360 implements ClientModInitializer {
     private void takeScreenshot(MinecraftClient client) {
         if (client.getFramebuffer() == null) return;
 
-        String filename = String.format("360_%d_%03d.png", System.currentTimeMillis(), shotIndex++);
+        String filename = String.format("360_%d_%03d.png",
+                System.currentTimeMillis(), shotIndex++);
+
         File targetFolder = folder;
 
-        // Ensure we run on the main client thread
+        // Run screenshot on the main client thread
         client.execute(() -> {
             ScreenshotRecorder.saveScreenshot(
                     targetFolder,
                     filename,
                     client.getFramebuffer(),
+                    0, // scale factor required by Yarn build.1
                     text -> {}
             );
         });
