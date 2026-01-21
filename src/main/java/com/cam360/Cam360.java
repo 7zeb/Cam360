@@ -108,7 +108,7 @@ public class Cam360 implements ClientModInitializer {
                 folder,
                 filename,
                 client.getFramebuffer(),
-                0,
+                1,   // FIXED: scale factor must NOT be zero
                 text -> {}
         );
     }
