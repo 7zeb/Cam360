@@ -7,7 +7,7 @@ Cam360 is a Fabric Mod that let's you take 360 images in Minecraft when you pres
 ## Downloads
 The latest version of Cam360 is **1.7.2** released on **January 23, 2026**
 
-Download it [Here](https://github.com/7zeb/Cam360/releases)
+Download it [Here](https://7zeb.github.io/Cam360-Website)
 
 ## Requirements
 To install Cam360 you need 
