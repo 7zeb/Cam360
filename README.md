@@ -40,4 +40,6 @@ If you have issues, or want to suggest a new feature?, report them to the [Issue
 If you want to add a new feature and you have the code, make a Pull Request [Here](https://github.com/7zeb/Cam360/pulls)
 
 ## Author
-7Zeb [My Website](https://7zeb.github.io) [My YouTube Channel](https://www.youtube.com/@7zeb)
+7Zeb [My Website](https://7zeb.github.io) 
+
+[My YouTube Channel](https://www.youtube.com/@7zeb)
