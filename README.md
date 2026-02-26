@@ -12,7 +12,7 @@ Download it [Here](https://7zeb.github.io/Cam360-Website)
 ## Requirements
 To install Cam360 you need 
 - Minecraft Java Edition version 1.21.8 or later (only 1.21.8 tested)
-- Java
+- Java (use Java 21 or later)
 - Fabric 0.15.11 or later
 
 **This is a client side mod**
