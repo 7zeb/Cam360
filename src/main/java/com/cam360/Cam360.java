@@ -22,8 +22,10 @@ public class Cam360 implements ClientModInitializer {
     private boolean capturing = false;
     private int delayTicks = 0; // 2‑tick delay counter
 
-    private Iterator<Float> yawIterator;
+    private Iterator<ViewStep> stepIterator;
     private float originalYaw;
+    private float originalPitch;
+
     private File folder;
     private int shotIndex = 0;
 
@@ -44,7 +46,7 @@ public class Cam360 implements ClientModInitializer {
                 startCapture(client);
             }
 
-            if (!capturing || yawIterator == null) return;
+            if (!capturing || stepIterator == null) return;
 
             // Handle the 2‑tick delay
             if (delayTicks > 0) {
@@ -58,9 +60,10 @@ public class Cam360 implements ClientModInitializer {
             }
 
             // Rotate player for next screenshot
-            if (yawIterator.hasNext()) {
-                float newYaw = yawIterator.next();
-                client.player.setYaw(newYaw);
+            if (stepIterator.hasNext()) {
+                ViewStep step = stepIterator.next();
+                client.player.setYaw(step.yaw);
+                client.player.setPitch(step.pitch);
 
                 delayTicks = 2; // wait 2 ticks before next screenshot
                 shotIndex++;
@@ -68,10 +71,12 @@ public class Cam360 implements ClientModInitializer {
             } else {
                 // Done capturing
                 client.player.setYaw(originalYaw);
+                client.player.setPitch(originalPitch);
+
                 capturing = false;
-                yawIterator = null;
+                stepIterator = null;
                 shotIndex = 0;
-                client.player.sendMessage(Text.literal("Captured 360° screenshots!"), false);
+                client.player.sendMessage(Text.literal("Captured 360° screenshots + up/down!"), false);
             }
         });
 
@@ -82,22 +87,29 @@ public class Cam360 implements ClientModInitializer {
         if (capturing || client.player == null) return;
 
         originalYaw = client.player.getYaw();
+        originalPitch = client.player.getPitch();
 
         folder = new File(client.runDirectory, "screenshots360/screenshots");
         if (!folder.exists()) folder.mkdirs();
 
-        List<Float> yawSteps = new ArrayList<>();
-        int steps = 8;
-        for (int i = 0; i < steps; i++) {
-            yawSteps.add(originalYaw + (i * 45.0f));
+        // Total: 8 (yaw) + 2 (up/down) = 10 screenshots
+        List<ViewStep> steps = new ArrayList<>();
+
+        int yawSteps = 8;
+        for (int i = 0; i < yawSteps; i++) {
+            steps.add(new ViewStep(originalYaw + (i * 45.0f), originalPitch));
         }
 
-        yawIterator = yawSteps.iterator();
+        // Add 2 extra screenshots: straight up + straight down (keep yaw as originalYaw)
+        steps.add(new ViewStep(originalYaw, -90.0f)); // up (sky)
+        steps.add(new ViewStep(originalYaw, 90.0f));  // down (ground)
+
+        stepIterator = steps.iterator();
         capturing = true;
         delayTicks = 2; // initial delay before first screenshot
         shotIndex = 0;
 
-        client.player.sendMessage(Text.literal("Starting 360° capture..."), false);
+        client.player.sendMessage(Text.literal("Starting 360° capture (+ up/down)..."), false);
     }
 
     private void takeScreenshot(MinecraftClient client) {
@@ -111,5 +123,15 @@ public class Cam360 implements ClientModInitializer {
                 1,   // FIXED: scale factor must NOT be zero
                 text -> {}
         );
+    }
+
+    private static final class ViewStep {
+        final float yaw;
+        final float pitch;
+
+        private ViewStep(float yaw, float pitch) {
+            this.yaw = yaw;
+            this.pitch = pitch;
+        }
     }
 }
