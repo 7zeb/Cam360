@@ -32,7 +32,7 @@ After you do that, run the .jar file and follow the steps.
 - Run Minecraft
 
 ## How to use
-to use the mod, press F9 anywhere in game, after you do it will automatically rotate your player around and the screenshots will be saved in the "screenshots360" folder inside of ".minecraft"
+to use the mod, press F12 anywhere in game, after you do it will automatically rotate your player around and the screenshots will be saved in the "screenshots360" folder inside of ".minecraft"
 
 ## Have issues or want to add new features?
 If you have issues, or want to suggest a new feature?, report them to the [Issues Page](https://github.com/7zeb/Cam360/issues)
