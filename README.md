@@ -1,3 +1,5 @@
+## This mod may or may not need to be updated for the upcoming transation from OpenGL - Vulkan for Minecraft.
+
 # Cam360
 A Minecraft mod for capturing 360 degree images.
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/7zeb/Cam360/total)
