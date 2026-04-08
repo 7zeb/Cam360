@@ -8,15 +8,15 @@ A Minecraft mod for capturing 360 degree images.
 Cam360 is a Fabric Mod that let's you take 360 images in Minecraft when you press a key, the mod will automatically tilt to all the different angles and take a screenshot.
 
 ## Downloads
-The latest version of Cam360 is **1.7.3** released on **February 26, 2026**
+The latest version of Cam360 is **1.9** released on **April 8, 2026**
 
 Download it [Here](https://7zeb.github.io/Cam360-Website)
 
 ## Requirements
 To install Cam360 you need 
-- Minecraft Java Edition version 1.21.8 or later (only 1.21.8 tested)
+- Minecraft Java Edition version 1.21.11
 - Java (use Java 21 or later)
-- Fabric 0.15.11 or later
+- Fabric 0.18.0 or later (0.18.6 tested)
 
 **This is a client side mod**
 ## How to install
