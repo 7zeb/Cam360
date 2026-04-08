@@ -32,13 +32,12 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        // FIX: Use a plain string for the category name. 
-        // "key.categories.misc" is the standard Minecraft translation key for 'Miscellaneous'.
+        // FIX: In 1.21.11, the fourth argument must be a KeyBinding.Category object.
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.cam360.capture",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
-                "key.categories.misc"
+                KeyBinding.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -82,7 +81,7 @@ public class Cam360 implements ClientModInitializer {
             }
         });
 
-        System.out.println("[Cam360] Client-side mod initialized!");
+        System.out.println("[Cam360] Client-side mod initialized for 1.21.11!");
     }
 
     private void startCapture(MinecraftClient client) {
@@ -94,7 +93,6 @@ public class Cam360 implements ClientModInitializer {
         folder = new File(client.runDirectory, "screenshots360/screenshots");
         if (!folder.exists()) folder.mkdirs();
 
-        // Total: 8 (yaw) + 2 (up/down) = 10 screenshots
         List<ViewStep> steps = new ArrayList<>();
 
         int yawSteps = 8;
@@ -102,13 +100,12 @@ public class Cam360 implements ClientModInitializer {
             steps.add(new ViewStep(originalYaw + (i * 45.0f), originalPitch));
         }
 
-        // Add 2 extra screenshots: straight up + straight down (keep yaw as originalYaw)
-        steps.add(new ViewStep(originalYaw, -90.0f)); // up (sky)
-        steps.add(new ViewStep(originalYaw, 90.0f));  // down (ground)
+        steps.add(new ViewStep(originalYaw, -90.0f)); // up
+        steps.add(new ViewStep(originalYaw, 90.0f));  // down
 
         stepIterator = steps.iterator();
         capturing = true;
-        delayTicks = 2; // initial delay before first screenshot
+        delayTicks = 2;
         shotIndex = 0;
 
         client.player.sendMessage(Text.literal("Starting 360° capture (+ up/down)..."), false);
@@ -118,8 +115,7 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
-        // FIX: Re-added the integer '1' for the unit/scale factor to match 
-        // the 5-argument method signature required in 1.21.11.
+        // FIX: Ensure the 5-argument method is used (folder, filename, framebuffer, scale, consumer)
         ScreenshotRecorder.saveScreenshot(
                 folder,
                 filename,
