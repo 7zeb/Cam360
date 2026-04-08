@@ -32,12 +32,14 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
+        // FIX: Use a plain string for the category name. 
+        // "key.categories.misc" is the standard Minecraft translation key for 'Miscellaneous'.
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.cam360.capture",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_F12,
-            KeyBinding.MISC_CATEGORY //Is this gonna fix it?
-));
+                "key.cam360.capture",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_F12,
+                "key.categories.misc"
+        ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null) return;
@@ -116,10 +118,13 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
+        // FIX: Re-added the integer '1' for the unit/scale factor to match 
+        // the 5-argument method signature required in 1.21.11.
         ScreenshotRecorder.saveScreenshot(
                 folder,
                 filename,
                 client.getFramebuffer(),
+                1,
                 text -> {}
         );
     }
