@@ -33,11 +33,11 @@ public class Cam360 implements ClientModInitializer {
     public void onInitializeClient() {
 
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.cam360.capture",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_F12,
-                Text.translatable("category.cam360")
-        ));
+            "key.cam360.capture",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_F12,
+            KeyBinding.MISC_CATEGORY //Is this gonna fix it?
+));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null) return;
