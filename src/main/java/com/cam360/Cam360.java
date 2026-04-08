@@ -36,7 +36,7 @@ public class Cam360 implements ClientModInitializer {
                 "key.cam360.capture",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
-                "category.cam360"
+                Text.translatable("category.cam360")
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
