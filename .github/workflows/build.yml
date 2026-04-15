@@ -2,7 +2,7 @@ name: Build 360cam
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "26-1" ]
   pull_request:
     branches: [ "main" ]
 
