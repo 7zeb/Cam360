@@ -2,7 +2,7 @@ name: Build 360cam
 
 on:
   push:
-    branches: [ "26-1" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -20,10 +20,10 @@ jobs:
           distribution: temurin
           java-version: 25
 
-      - name: Install Gradle
-        uses: gradle/gradle-build-action@v2
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 9.4.0
+          gradle-version: 9.5.1
 
       - name: Build with Gradle
         run: gradle build
