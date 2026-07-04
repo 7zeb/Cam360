@@ -115,11 +115,11 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
-        // FIXED: Restored the exact, verified Mojang field mapping target for the master viewport buffer
+        // FIXED: Dropped the method parentheses. The target variable is accessed as a direct field reference in 26.2.
         Screenshot.grab(
                 folder,
                 filename,
-                client.getMainRenderTarget(),
+                client.mainRenderTarget,
                 text -> {}
         );
     }
