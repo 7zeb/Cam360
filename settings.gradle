@@ -3,12 +3,12 @@ pluginManagement {
         gradlePluginPortal()
         maven {
             name = 'Fabric'
-            url = 'https://fabricmc.net'
+            url = 'https://maven.fabricmc.net/'
         }
     }
     plugins {
-        // FIXED: Declare the version here globally for Gradle 9.5.1
-        id 'fabric-loom' version '1.17-SNAPSHOT'
+        // FIXED: Using the required explicit canonical namespace for unobfuscated environments
+        id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     }
 }
 
