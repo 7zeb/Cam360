@@ -57,7 +57,7 @@ public class Cam360 implements ClientModInitializer {
             }
 
             if (shotIndex > 0) {
-                takeScreenshot(client);
+                takeScreenshot();
             }
 
             if (stepIterator.hasNext()) {
@@ -127,12 +127,15 @@ public class Cam360 implements ClientModInitializer {
         client.player.sendSystemMessage(Component.literal("Capturing panorama fields..."));
     }
 
-    private void takeScreenshot(Minecraft client) {
-        // This structural call perfectly captures the main render buffer targeting MojMap parameters
+    private void takeScreenshot() {
+        Minecraft instance = Minecraft.getInstance();
+        if (instance == null) return;
+        
+        // Bypasses local lambda parameters by calling the explicit static global engine target
         Screenshot.grab(
-            folder,
-            client.getMainRenderTarget(),
-            component -> client.execute(() -> {})
+            this.folder,
+            instance.getMainRenderTarget(),
+            component -> instance.execute(() -> {})
         );
     }
 
