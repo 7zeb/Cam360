@@ -63,7 +63,6 @@ public class Cam360 implements ClientModInitializer {
             if (stepIterator.hasNext()) {
                 ViewStep step = stepIterator.next();
                 
-                // Visual updates under Mojang Mappings
                 client.player.setYRot(step.yaw);
                 client.player.setXRot(step.pitch);
                 client.player.yRotO = step.yaw;
@@ -129,10 +128,10 @@ public class Cam360 implements ClientModInitializer {
     }
 
     private void takeScreenshot(Minecraft client) {
-        // Mojang Mapping fix: client.getMainRenderTarget() -> client.getRenderTarget()
+        // This structural call perfectly captures the main render buffer targeting MojMap parameters
         Screenshot.grab(
             folder,
-            client.getRenderTarget(),
+            client.getMainRenderTarget(),
             component -> client.execute(() -> {})
         );
     }
