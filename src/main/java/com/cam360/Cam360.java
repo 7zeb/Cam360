@@ -57,7 +57,6 @@ public class Cam360 implements ClientModInitializer {
                 return;
             }
 
-            // Capture previous view after camera settle
             if (shotIndex > 0) {
                 takeScreenshot();
             }
@@ -140,7 +139,7 @@ public class Cam360 implements ClientModInitializer {
         Screenshot.grab(
             this.folder,
             filename,
-            instance.mainRenderTarget,
+            instance.getMainRenderTarget(),
             message -> instance.execute(() -> {})
         );
     }
