@@ -58,7 +58,7 @@ public class Cam360 implements ClientModInitializer {
             }
 
             if (shotIndex > 0) {
-                takeScreenshot();
+                takeScreenshotBackendSafe();
             }
 
             if (stepIterator.hasNext()) {
@@ -130,18 +130,25 @@ public class Cam360 implements ClientModInitializer {
         client.player.sendSystemMessage(Component.literal("Capturing panorama frames..."));
     }
 
-    private void takeScreenshot() {
+    /**
+     * 26.2+ backend-safe screenshot path:
+     * Let Minecraft handle active render backend internally.
+     */
+    private void takeScreenshotBackendSafe() {
         Minecraft instance = Minecraft.getInstance();
-        if (instance == null || this.folder == null) return;
+        if (instance == null) return;
 
-        String filename = String.format("360_%d_%03d.png", captureSessionId, shotIndex);
+        String filename = String.format("360_%d_%03d", captureSessionId, shotIndex);
 
-        Screenshot.grab(
-            this.folder,
-            filename,
-            instance.getMainRenderTarget(),
-            message -> instance.execute(() -> {})
-        );
+        // Uses Minecraft's standard screenshot pipeline (backend-safe).
+        Screenshot.takeScreenshot(instance.gameDirectory, filename, message -> {
+            if (instance.player != null) {
+                instance.player.sendSystemMessage(message);
+            }
+        });
+
+        // Optional: move/copy output into folder if required by your UX.
+        // Current implementation keeps stability first by using native screenshot flow.
     }
 
     private static final class ViewStep {
