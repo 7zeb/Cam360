@@ -115,11 +115,11 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
-        // FIXED: Dropped the method parentheses. The target variable is accessed as a direct field reference in 26.2.
+        // FIXED: Reverted to the precise public getter method required to pipe target buffer assets
         Screenshot.grab(
                 folder,
                 filename,
-                client.mainRenderTarget,
+                client.getRenderTarget(),
                 text -> {}
         );
     }
