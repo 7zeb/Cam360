@@ -115,11 +115,11 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
-        // FIXED: Reverted to the precise public getter method required to pipe target buffer assets
+        // FIXED: Uses the exact, verified Mojang method signature for accessing the main frame render context
         Screenshot.grab(
                 folder,
                 filename,
-                client.getRenderTarget(),
+                client.getMainRenderTarget(),
                 text -> {}
         );
     }
