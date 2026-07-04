@@ -12,7 +12,8 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings() 
+    
+    // REMOVED: mappings loom.officialMojangMappings() is gone because 26.2 is natively unobfuscated
 
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
