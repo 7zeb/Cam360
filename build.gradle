@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.cam360'
-version = '2.0'
+version = '1.0'
 
 repositories {
     mavenCentral()
@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    // FIXED: Changed to implementation. Standard Loom setups for 26.2 use this exclusively.
-    implementation "com.mojang:minecraft:${minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${loader_version}"
-    implementation "net.fabricmc:fabric-api:fabric-api:${fabric_version}"
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+
+    modUnmapped "net.fabricmc:fabric-loader:${loader_version}"
+    modUnmapped "net.fabricmc:fabric-api:fabric-api:${fabric_version}"
 }
