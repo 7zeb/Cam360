@@ -2,11 +2,12 @@ package com.cam360;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
@@ -18,6 +19,11 @@ import java.util.List;
 public class Cam360 implements ClientModInitializer {
 
     private static KeyMapping captureKey;
+
+    // FIXED: Properly register a modern Category object instead of using a raw String
+    private static final KeyMapping.Category MISC_CATEGORY = KeyMapping.Category.register(
+            ResourceLocation.fromNamespaceAndPath("cam360", "misc")
+    );
 
     private boolean capturing = false;
     private int delayTicks = 0; 
@@ -32,11 +38,12 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        captureKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        // FIXED: KeyMappingHelper class path updated to match modern Fabric structures
+        captureKey = KeyMappingHelper.registerKeyBinding(new KeyMapping(
                 "key.cam360.capture",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
-                "key.categories.misc"
+                MISC_CATEGORY
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
