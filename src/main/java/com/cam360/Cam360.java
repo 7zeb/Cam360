@@ -131,10 +131,12 @@ public class Cam360 implements ClientModInitializer {
         Minecraft instance = Minecraft.getInstance();
         if (instance == null) return;
         
-        // Bypasses local lambda parameters by calling the explicit static global engine target
+        String filename = String.format("360_%d_%03d.png", System.currentTimeMillis(), shotIndex);
+
+        // Clean method signature bypasses old buffer references completely
         Screenshot.grab(
-            this.folder,
-            instance.getMainRenderTarget(),
+            instance.gameDirectory,
+            filename,
             component -> instance.execute(() -> {})
         );
     }
