@@ -63,7 +63,7 @@ public class Cam360 implements ClientModInitializer {
             if (stepIterator.hasNext()) {
                 ViewStep step = stepIterator.next();
                 
-                // Absolute visual lock
+                // Visual updates under Mojang Mappings
                 client.player.setYRot(step.yaw);
                 client.player.setXRot(step.pitch);
                 client.player.yRotO = step.yaw;
@@ -71,17 +71,15 @@ public class Cam360 implements ClientModInitializer {
                 client.player.yHeadRot = step.yaw;
                 client.player.yHeadRotO = step.yaw;
 
-                // Basic packet update to keep server tracking aligned smoothly
                 if (client.getConnection() != null) {
                     client.getConnection().send(new ServerboundMovePlayerPacket.Rot(
                         step.yaw, step.pitch, true, false
                     ));
                 }
                 
-                delayTicks = 4; // 4 ticks ensures all block updates catch up to the camera
+                delayTicks = 4; 
                 shotIndex++;
             } else {
-                // Return to true spawn/look point
                 client.player.setYRot(originalYaw);
                 client.player.setXRot(originalPitch);
                 client.player.yRotO = originalYaw;
@@ -131,12 +129,13 @@ public class Cam360 implements ClientModInitializer {
     }
 
     private void takeScreenshot(Minecraft client) {
-    Screenshot.grab(
-        folder,
-        client.getRenderTarget(), // <-- Correct method hook for the frame buffer
-        component -> client.execute(() -> {})
-    );
-}
+        // Mojang Mapping fix: client.getMainRenderTarget() -> client.getRenderTarget()
+        Screenshot.grab(
+            folder,
+            client.getRenderTarget(),
+            component -> client.execute(() -> {})
+        );
+    }
 
     private static final class ViewStep {
         final float yaw;
