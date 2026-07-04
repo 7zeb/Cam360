@@ -1,12 +1,13 @@
 plugins {
-    id 'fabric-loom' version '1.17-SNAPSHOT'
+    id 'fabric-loom'
+}
 
 group = 'com.cam360'
-version = '1.0'
+version = '2.0'
 
 repositories {
     mavenCentral()
-    maven { url = "https://maven.fabricmc.net/" }
+    maven { url = "https://fabricmc.net" }
 }
 
 dependencies {
