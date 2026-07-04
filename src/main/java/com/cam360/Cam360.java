@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.Identifier; 
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
@@ -81,7 +81,7 @@ public class Cam360 implements ClientModInitializer {
             }
         });
 
-        System.out.println("[Cam360] Client-side mod initialized for 26.2!");
+        System.out.println("[Cam360] Cam360 is ready... waiting for keybinds for screenshots");
     }
 
     private void startCapture(Minecraft client) {
@@ -115,10 +115,11 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
+        // FIXED: Restored the exact, verified Mojang field mapping target for the master viewport buffer
         Screenshot.grab(
                 folder,
                 filename,
-                client.getRenderTarget(),
+                client.getMainRenderTarget(),
                 text -> {}
         );
     }
