@@ -7,7 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier; 
+import net.minecraft.resources.Identifier;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
@@ -17,31 +18,28 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Cam360 implements ClientModInitializer {
-
     private static KeyMapping captureKey;
-
-    private static final KeyMapping.Category MISC_CATEGORY = KeyMapping.Category.register(
-            Identifier.fromNamespaceAndPath("cam360", "misc")
-    );
-
+    private static KeyMapping.Category miscCategory;
+    
     private boolean capturing = false;
-    private int delayTicks = 0; 
-
+    private int delayTicks = 0;
     private Iterator<ViewStep> stepIterator;
     private float originalYaw;
     private float originalPitch;
-
     private File folder;
     private int shotIndex = 0;
 
     @Override
     public void onInitializeClient() {
+        miscCategory = KeyMapping.Category.register(
+            Identifier.fromNamespaceAndPath("cam360", "misc")
+        );
 
         captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.cam360.capture",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_F12,
-                MISC_CATEGORY
+            "key.cam360.capture",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_F12,
+            miscCategory
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -58,30 +56,51 @@ public class Cam360 implements ClientModInitializer {
                 return;
             }
 
-            if (delayTicks == 0 && shotIndex > 0) {
+            if (shotIndex > 0) {
                 takeScreenshot(client);
             }
 
             if (stepIterator.hasNext()) {
                 ViewStep step = stepIterator.next();
+                
+                // Absolute visual lock
                 client.player.setYRot(step.yaw);
                 client.player.setXRot(step.pitch);
+                client.player.yRotO = step.yaw;
+                client.player.xRotO = step.pitch;
+                client.player.yHeadRot = step.yaw;
+                client.player.yHeadRotO = step.yaw;
 
-                delayTicks = 2; 
+                // Basic packet update to keep server tracking aligned smoothly
+                if (client.getConnection() != null) {
+                    client.getConnection().send(new ServerboundMovePlayerPacket.Rot(
+                        step.yaw, step.pitch, true, false
+                    ));
+                }
+                
+                delayTicks = 4; // 4 ticks ensures all block updates catch up to the camera
                 shotIndex++;
-
             } else {
+                // Return to true spawn/look point
                 client.player.setYRot(originalYaw);
                 client.player.setXRot(originalPitch);
+                client.player.yRotO = originalYaw;
+                client.player.xRotO = originalPitch;
+                client.player.yHeadRot = originalYaw;
+                client.player.yHeadRotO = originalYaw;
 
+                if (client.getConnection() != null) {
+                    client.getConnection().send(new ServerboundMovePlayerPacket.Rot(
+                        originalYaw, originalPitch, true, false
+                    ));
+                }
+                
                 capturing = false;
                 stepIterator = null;
                 shotIndex = 0;
-                client.player.sendSystemMessage(Component.literal("Captured 360° screenshots + up/down!"));
+                client.player.sendSystemMessage(Component.literal("360° Panorama Completed."));
             }
         });
-
-        System.out.println("[Cam360] Cam360 is ready... waiting for keybinds for screenshots");
     }
 
     private void startCapture(Minecraft client) {
@@ -89,38 +108,33 @@ public class Cam360 implements ClientModInitializer {
 
         originalYaw = client.player.getYRot();
         originalPitch = client.player.getXRot();
-
-        folder = new File(client.gameDirectory, "screenshots360/screenshots");
-        if (!folder.exists()) folder.mkdirs();
+        
+        folder = new File(client.gameDirectory, "screenshots/360_panoramas");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
 
         List<ViewStep> steps = new ArrayList<>();
-
         int yawSteps = 8;
         for (int i = 0; i < yawSteps; i++) {
             steps.add(new ViewStep(originalYaw + (i * 45.0f), originalPitch));
         }
-
-        steps.add(new ViewStep(originalYaw, -90.0f)); 
-        steps.add(new ViewStep(originalYaw, 90.0f));  
+        steps.add(new ViewStep(originalYaw, -90.0f));
+        steps.add(new ViewStep(originalYaw, 90.0f));
 
         stepIterator = steps.iterator();
         capturing = true;
-        delayTicks = 2;
+        delayTicks = 4;
         shotIndex = 0;
-
-        client.player.sendSystemMessage(Component.literal("Starting 360° capture (+ up/down)..."));
+        
+        client.player.sendSystemMessage(Component.literal("Capturing panorama fields..."));
     }
 
     private void takeScreenshot(Minecraft client) {
-        String filename = String.format("360_%d_%03d.png",
-                System.currentTimeMillis(), shotIndex);
-
-        // FIXED: Uses the exact, verified Mojang method signature for accessing the main frame render context
         Screenshot.grab(
-                folder,
-                filename,
-                client.getMainRenderTarget(),
-                text -> {}
+            folder,
+            client.getMainRenderTarget(),
+            component -> client.execute(() -> {})
         );
     }
 
