@@ -20,7 +20,7 @@ public class Cam360 implements ClientModInitializer {
     private static KeyBinding captureKey;
 
     private boolean capturing = false;
-    private int delayTicks = 0; // 2‑tick delay counter
+    private int delayTicks = 0; // 2‑tick delay counter 
 
     private Iterator<ViewStep> stepIterator;
     private float originalYaw;
@@ -32,12 +32,11 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        // FIX: In 1.21.11, the fourth argument must be a KeyBinding.Category object.
         captureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.cam360.capture",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
-                KeyBinding.Category.MISC
+                "key.categories.misc"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -77,11 +76,11 @@ public class Cam360 implements ClientModInitializer {
                 capturing = false;
                 stepIterator = null;
                 shotIndex = 0;
-                client.player.sendMessage(Text.literal("Captured 360° screenshots + up/down!"), false);
+                client.player.sendMessage(Text.literal("Captured 360° screenshots + up/down!"));
             }
         });
 
-        System.out.println("[Cam360] Client-side mod initialized for 1.21.11!");
+        System.out.println("[Cam360] Client-side mod initialized for 26.2!");
     }
 
     private void startCapture(MinecraftClient client) {
@@ -108,19 +107,17 @@ public class Cam360 implements ClientModInitializer {
         delayTicks = 2;
         shotIndex = 0;
 
-        client.player.sendMessage(Text.literal("Starting 360° capture (+ up/down)..."), false);
+        client.player.sendMessage(Text.literal("Starting 360° capture (+ up/down)..."));
     }
 
     private void takeScreenshot(MinecraftClient client) {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
-        // FIX: Ensure the 5-argument method is used (folder, filename, framebuffer, scale, consumer)
         ScreenshotRecorder.saveScreenshot(
                 folder,
                 filename,
                 client.getFramebuffer(),
-                1,
                 text -> {}
         );
     }
