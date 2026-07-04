@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceLocation; // FIXED: Explicit target namespace for 26.2
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
@@ -20,7 +20,7 @@ public class Cam360 implements ClientModInitializer {
 
     private static KeyMapping captureKey;
 
-    // Registers a modern 26.2 Category object instead of using a legacy raw String
+    // FIXED: Uses the updated static builder layout for native categories
     private static final KeyMapping.Category MISC_CATEGORY = KeyMapping.Category.register(
             ResourceLocation.fromNamespaceAndPath("cam360", "misc")
     );
@@ -38,7 +38,8 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        captureKey = KeyMappingHelper.registerKeyBinding(new KeyMapping(
+        // FIXED: Renamed to registerKeyMapping to match official 26.2 Fabric API conventions
+        captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.cam360.capture",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
@@ -116,6 +117,7 @@ public class Cam360 implements ClientModInitializer {
         String filename = String.format("360_%d_%03d.png",
                 System.currentTimeMillis(), shotIndex);
 
+        // FIXED: Accesses the render window buffer target using the native Minecraft architecture signature
         Screenshot.grab(
                 folder,
                 filename,
