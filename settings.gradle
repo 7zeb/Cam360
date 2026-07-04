@@ -6,27 +6,6 @@ pluginManagement {
             url = 'https://maven.fabricmc.net/'
         }
     }
-    plugins {
-        id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
-    }
-}
-
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        exclusiveContent {
-            forRepository {
-                maven {
-                    name = 'Fabric'
-                    url = 'https://maven.fabricmc.net/'
-                }
-            }
-            filter {
-                includeGroup 'net.fabricmc'
-                includeGroup 'net.fabricmc.fabric-api'
-            }
-        }
-    }
 }
 
 rootProject.name = 'cam360'
