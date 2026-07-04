@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.resources.Identifier;
@@ -26,9 +25,7 @@ public class Cam360 implements ClientModInitializer {
     private Iterator<ViewStep> stepIterator;
     private float originalYaw;
     private float originalPitch;
-    private File folder;
     private int shotIndex = 0;
-    private long captureSessionId = 0L;
 
     @Override
     public void onInitializeClient() {
@@ -57,8 +54,9 @@ public class Cam360 implements ClientModInitializer {
                 return;
             }
 
+            // Capture previous view after camera settle
             if (shotIndex > 0) {
-                takeScreenshotBackendSafe();
+                takeScreenshotViaKeybind(client);
             }
 
             if (stepIterator.hasNext()) {
@@ -96,7 +94,7 @@ public class Cam360 implements ClientModInitializer {
                 capturing = false;
                 stepIterator = null;
                 shotIndex = 0;
-                client.player.sendSystemMessage(Component.literal("360° Panorama completed."));
+                client.player.sendSystemMessage(Component.literal("360° Panorama completed. Screenshots saved to default screenshots folder."));
             }
         });
     }
@@ -106,12 +104,11 @@ public class Cam360 implements ClientModInitializer {
 
         originalYaw = client.player.getYRot();
         originalPitch = client.player.getXRot();
-        captureSessionId = System.currentTimeMillis();
 
-        folder = new File(client.gameDirectory, "screenshots/360_panoramas");
-        if (!folder.exists() && !folder.mkdirs()) {
-            client.player.sendSystemMessage(Component.literal("Cam360: Failed to create screenshot folder."));
-            return;
+        // Ensure directory exists (optional; vanilla screenshot still uses default path)
+        File folder = new File(client.gameDirectory, "screenshots");
+        if (!folder.exists()) {
+            folder.mkdirs();
         }
 
         List<ViewStep> steps = new ArrayList<>();
@@ -130,25 +127,17 @@ public class Cam360 implements ClientModInitializer {
         client.player.sendSystemMessage(Component.literal("Capturing panorama frames..."));
     }
 
-    /**
-     * 26.2+ backend-safe screenshot path:
-     * Let Minecraft handle active render backend internally.
-     */
-    private void takeScreenshotBackendSafe() {
-        Minecraft instance = Minecraft.getInstance();
-        if (instance == null) return;
-
-        String filename = String.format("360_%d_%03d", captureSessionId, shotIndex);
-
-        // Uses Minecraft's standard screenshot pipeline (backend-safe).
-        Screenshot.takeScreenshot(instance.gameDirectory, filename, message -> {
-            if (instance.player != null) {
-                instance.player.sendSystemMessage(message);
+    private void takeScreenshotViaKeybind(Minecraft client) {
+        if (client == null || client.options == null) return;
+        try {
+            // Triggers vanilla screenshot handling (same path as F2)
+            client.options.keyScreenshot.setDown(true);
+            client.execute(() -> client.options.keyScreenshot.setDown(false));
+        } catch (Throwable t) {
+            if (client.player != null) {
+                client.player.sendSystemMessage(Component.literal("Cam360 screenshot failed: " + t.getClass().getSimpleName()));
             }
-        });
-
-        // Optional: move/copy output into folder if required by your UX.
-        // Current implementation keeps stability first by using native screenshot flow.
+        }
     }
 
     private static final class ViewStep {
