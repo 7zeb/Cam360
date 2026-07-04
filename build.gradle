@@ -3,16 +3,22 @@ plugins {
 }
 
 group = 'com.cam360'
-version = '2.0'
+version = '1.0'
 
 repositories {
     mavenCentral()
-    maven { url = "https://maven.fabricmc.net/" }
+    maven { 
+        name = "Fabric"
+        url = "https://maven.fabricmc.net/" 
+    }
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+}
 
-    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+jar {
+    archiveClassifier = ""
 }
