@@ -20,7 +20,7 @@ public class Cam360 implements ClientModInitializer {
     private static KeyBinding captureKey;
 
     private boolean capturing = false;
-    private int delayTicks = 0; // 2‑tick delay counter
+    private int delayTicks = 0; // 2‑tick delay counter 
 
     private Iterator<ViewStep> stepIterator;
     private float originalYaw;
