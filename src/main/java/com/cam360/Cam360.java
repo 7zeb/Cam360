@@ -131,12 +131,12 @@ public class Cam360 implements ClientModInitializer {
     }
 
     private void takeScreenshot(Minecraft client) {
-        Screenshot.grab(
-            folder,
-            client.getMainRenderTarget(),
-            component -> client.execute(() -> {})
-        );
-    }
+    Screenshot.grab(
+        folder,
+        client.getRenderTarget(), // <-- Correct method hook for the frame buffer
+        component -> client.execute(() -> {})
+    );
+}
 
     private static final class ViewStep {
         final float yaw;
