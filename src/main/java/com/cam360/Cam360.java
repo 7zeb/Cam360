@@ -20,7 +20,7 @@ public class Cam360 implements ClientModInitializer {
 
     private static KeyMapping captureKey;
 
-    // FIXED: Properly register a modern Category object instead of using a raw String
+    // Registers a modern 26.2 Category object instead of using a legacy raw String
     private static final KeyMapping.Category MISC_CATEGORY = KeyMapping.Category.register(
             ResourceLocation.fromNamespaceAndPath("cam360", "misc")
     );
@@ -38,7 +38,6 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        // FIXED: KeyMappingHelper class path updated to match modern Fabric structures
         captureKey = KeyMappingHelper.registerKeyBinding(new KeyMapping(
                 "key.cam360.capture",
                 InputConstants.Type.KEYSYM,
