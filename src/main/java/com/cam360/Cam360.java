@@ -8,8 +8,8 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protaocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
@@ -33,7 +33,7 @@ public class Cam360 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         miscCategory = KeyMapping.Category.register(
-            ResourceLocation.fromNamespaceAndPath("cam360", "misc")
+            Identifier.fromNamespaceAndPath("cam360", "misc")
         );
 
         captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
@@ -139,7 +139,7 @@ public class Cam360 implements ClientModInitializer {
         Screenshot.grab(
             this.folder,
             filename,
-            instance.getMainRenderTarget(),
+            instance.getRenderTarget(),
             message -> instance.execute(() -> {})
         );
     }
