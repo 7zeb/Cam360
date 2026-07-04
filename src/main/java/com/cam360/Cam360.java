@@ -133,10 +133,11 @@ public class Cam360 implements ClientModInitializer {
         
         String filename = String.format("360_%d_%03d.png", System.currentTimeMillis(), shotIndex);
 
-        // Clean method signature bypasses old buffer references completely
+        // Fixed parameter mapping logic perfectly resolving target types
         Screenshot.grab(
-            instance.gameDirectory,
+            this.folder,
             filename,
+            instance.getMainRenderTarget(),
             component -> instance.execute(() -> {})
         );
     }
