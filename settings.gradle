@@ -7,7 +7,6 @@ pluginManagement {
         }
     }
     plugins {
-        // FIXED: Using the required explicit canonical namespace for unobfuscated environments
         id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     }
 }
