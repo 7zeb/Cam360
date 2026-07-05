@@ -254,16 +254,22 @@ public class Cam360 implements ClientModInitializer {
         }
     }
 
-    // FIXED: use click() instead of setDown(true/false)
-    private void triggerVanillaScreenshot(Minecraft client) {
-        try {
-            KeyMapping screenshotKey = client.options.keyScreenshot;
-            if (screenshotKey != null) {
-                screenshotKey.click();
+   private void triggerVanillaScreenshot(Minecraft client) {
+    try {
+        if (client == null || client.options == null) return;
+        KeyMapping screenshotKey = client.options.keyScreenshot;
+        if (screenshotKey == null) return;
+
+        screenshotKey.setDown(true);
+        client.execute(() -> {
+            try {
+                screenshotKey.setDown(false);
+            } catch (Throwable ignored) {
             }
-        } catch (Throwable ignored) {
-        }
+        });
+    } catch (Throwable ignored) {
     }
+}
 
     private File findNewestUnconsumedVanillaScreenshot(Minecraft client) {
         File vanillaDir = new File(client.gameDirectory, "screenshots");
