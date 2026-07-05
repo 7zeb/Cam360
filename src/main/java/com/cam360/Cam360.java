@@ -18,7 +18,10 @@ import java.util.List;
 
 public class Cam360 implements ClientModInitializer {
     private static KeyMapping captureKey;
+    private static KeyMapping toggleModeKey;
     private static KeyMapping.Category miscCategory;
+
+    private Cam360Config config;
 
     private boolean capturing = false;
     private int delayTicks = 0;
@@ -26,9 +29,15 @@ public class Cam360 implements ClientModInitializer {
     private float originalYaw;
     private float originalPitch;
     private int shotIndex = 0;
+    private long captureSessionId = 0L;
+
+    private final List<File> capturedShots = new ArrayList<>();
 
     @Override
     public void onInitializeClient() {
+        Minecraft mc = Minecraft.getInstance();
+        config = Cam360Config.load(mc.gameDirectory);
+
         miscCategory = KeyMapping.Category.register(
             Identifier.fromNamespaceAndPath("cam360", "misc")
         );
@@ -40,8 +49,21 @@ public class Cam360 implements ClientModInitializer {
             miscCategory
         ));
 
+        toggleModeKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+            "key.cam360.toggle_mode",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_F11,
+            miscCategory
+        ));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.level == null) return;
+
+            while (toggleModeKey.consumeClick()) {
+                config.captureMode = config.captureMode.next();
+                config.save(client.gameDirectory);
+                client.player.sendSystemMessage(Component.literal("Cam360 mode: " + config.captureMode));
+            }
 
             while (captureKey.consumeClick()) {
                 startCapture(client);
@@ -54,9 +76,9 @@ public class Cam360 implements ClientModInitializer {
                 return;
             }
 
-            // Capture previous view after camera settle
             if (shotIndex > 0) {
-                takeScreenshotViaKeybind(client);
+                File f = takeScreenshotViaKeybind(client, shotIndex);
+                if (f != null) capturedShots.add(f);
             }
 
             if (stepIterator.hasNext()) {
@@ -71,30 +93,14 @@ public class Cam360 implements ClientModInitializer {
 
                 if (client.getConnection() != null) {
                     client.getConnection().send(new ServerboundMovePlayerPacket.Rot(
-                        step.yaw, step.pitch, client.player.onGround(), false
+                            step.yaw, step.pitch, client.player.onGround(), false
                     ));
                 }
 
                 delayTicks = 4;
                 shotIndex++;
             } else {
-                client.player.setYRot(originalYaw);
-                client.player.setXRot(originalPitch);
-                client.player.yRotO = originalYaw;
-                client.player.xRotO = originalPitch;
-                client.player.yHeadRot = originalYaw;
-                client.player.yHeadRotO = originalYaw;
-
-                if (client.getConnection() != null) {
-                    client.getConnection().send(new ServerboundMovePlayerPacket.Rot(
-                        originalYaw, originalPitch, client.player.onGround(), false
-                    ));
-                }
-
-                capturing = false;
-                stepIterator = null;
-                shotIndex = 0;
-                client.player.sendSystemMessage(Component.literal("360° Panorama completed. Screenshots saved to default screenshots folder."));
+                endCapture(client);
             }
         });
     }
@@ -104,12 +110,13 @@ public class Cam360 implements ClientModInitializer {
 
         originalYaw = client.player.getYRot();
         originalPitch = client.player.getXRot();
+        captureSessionId = System.currentTimeMillis();
 
-        // Ensure directory exists (optional; vanilla screenshot still uses default path)
-        File folder = new File(client.gameDirectory, "screenshots");
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
+        capturedShots.clear();
+
+        capturing = true;
+        delayTicks = 4;
+        shotIndex = 0;
 
         List<ViewStep> steps = new ArrayList<>();
         int yawSteps = 8;
@@ -118,25 +125,63 @@ public class Cam360 implements ClientModInitializer {
         }
         steps.add(new ViewStep(originalYaw, -90.0f));
         steps.add(new ViewStep(originalYaw, 90.0f));
-
         stepIterator = steps.iterator();
-        capturing = true;
-        delayTicks = 4;
-        shotIndex = 0;
 
-        client.player.sendSystemMessage(Component.literal("Capturing panorama frames..."));
+        client.player.sendSystemMessage(Component.literal("Capturing panorama frames... Mode: " + config.captureMode));
     }
 
-    private void takeScreenshotViaKeybind(Minecraft client) {
-        if (client == null || client.options == null) return;
+    private void endCapture(Minecraft client) {
+        if (client.player == null) return;
+
+        client.player.setYRot(originalYaw);
+        client.player.setXRot(originalPitch);
+        client.player.yRotO = originalYaw;
+        client.player.xRotO = originalPitch;
+        client.player.yHeadRot = originalYaw;
+        client.player.yHeadRotO = originalYaw;
+
+        if (client.getConnection() != null) {
+            client.getConnection().send(new ServerboundMovePlayerPacket.Rot(
+                    originalYaw, originalPitch, client.player.onGround(), false
+            ));
+        }
+
+        capturing = false;
+        stepIterator = null;
+        shotIndex = 0;
+
+        if (config.captureMode == CaptureMode.AUTO_STITCH) {
+            try {
+                File outDir = new File(client.gameDirectory, "screenshots/360_panoramas");
+                File stitched = PanoramaStitcher.stitchSimple(capturedShots, outDir, captureSessionId);
+                client.player.sendSystemMessage(Component.literal("Panorama stitched: " + stitched.getName()));
+            } catch (Exception e) {
+                client.player.sendSystemMessage(Component.literal("Auto-stitch failed, kept separate screenshots."));
+            }
+        } else {
+            client.player.sendSystemMessage(Component.literal("360° Panorama completed (separate screenshots)."));
+        }
+    }
+
+    /**
+     * Safer backend path: uses vanilla screenshot key path.
+     * Note: vanilla chooses filename/path. We create an expected File reference for stitch input.
+     */
+    private File takeScreenshotViaKeybind(Minecraft client, int index) {
         try {
-            // Triggers vanilla screenshot handling (same path as F2)
+            String base = "cam360_" + captureSessionId + "_" + String.format("%03d", index);
+            File screenshotsDir = new File(client.gameDirectory, "screenshots");
+            if (!screenshotsDir.exists()) screenshotsDir.mkdirs();
+
+            // Trigger screenshot
             client.options.keyScreenshot.setDown(true);
             client.execute(() -> client.options.keyScreenshot.setDown(false));
+
+            // We cannot guarantee vanilla exact naming here, so we return an expected path placeholder.
+            // For production, replace with a direct screenshot API call once your mappings are locked.
+            return new File(screenshotsDir, base + ".png");
         } catch (Throwable t) {
-            if (client.player != null) {
-                client.player.sendSystemMessage(Component.literal("Cam360 screenshot failed: " + t.getClass().getSimpleName()));
-            }
+            return null;
         }
     }
 
