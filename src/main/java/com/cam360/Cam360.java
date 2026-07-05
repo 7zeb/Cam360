@@ -8,7 +8,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceLocation; 
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
@@ -25,7 +25,7 @@ public class Cam360 implements ClientModInitializer {
     private Cam360Config config;
     private boolean capturing = false;
     private int delayTicks = 0;
-    private Iterator<ViewStep> stepIterator;
+    private Iterator<Cam360.ViewStep> stepIterator;
     private float originalYaw;
     private float originalPitch;
     private int shotIndex = 0;
@@ -35,16 +35,7 @@ public class Cam360 implements ClientModInitializer {
     private final List<File> capturedShots = new ArrayList<>();
     private final Set<String> knownPngPaths = new HashSet<>();
 
-    public static class Cam360Config {
-        public Mode captureMode = Mode.PANORAMA;
-        public enum Mode {
-            PANORAMA;
-            public Mode next() { return PANORAMA; }
-        }
-        public static Cam360Config load(File dir) { return new Cam360Config(); }
-        public void save(File dir) {}
-    }
-
+    // Record structure for tracking specific yaw and pitch rotation milestones
     public record ViewStep(float yaw, float pitch) {}
 
     @Override
@@ -52,19 +43,19 @@ public class Cam360 implements ClientModInitializer {
         Minecraft mc = Minecraft.getInstance();
         config = Cam360Config.load(mc.gameDirectory);
 
-        // Official Mojang key mapping structure
+        // FIXED: Using standard categories ("key.categories.misc") to avoid the Category class type mismatch
         captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.cam360.capture",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
-                "category.cam360"
+                "key.categories.misc"
         ));
 
         toggleModeKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.cam360.toggle_mode",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F11,
-                "category.cam360"
+                "key.categories.misc"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -126,12 +117,12 @@ public class Cam360 implements ClientModInitializer {
             }
         }
 
-        List<ViewStep> steps = new ArrayList<>();
+        List<Cam360.ViewStep> steps = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
-            steps.add(new ViewStep(originalYaw + (i * 45.0f), originalPitch));
+            steps.add(new Cam360.ViewStep(originalYaw + (i * 45.0f), originalPitch));
         }
-        steps.add(new ViewStep(originalYaw, -90.0f));
-        steps.add(new ViewStep(originalYaw, 90.0f));
+        steps.add(new Cam360.ViewStep(originalYaw, -90.0f));
+        steps.add(new Cam360.ViewStep(originalYaw, 90.0f));
         stepIterator = steps.iterator();
 
         client.player.sendSystemMessage(Component.literal(
@@ -159,29 +150,48 @@ public class Cam360 implements ClientModInitializer {
         if (client.player == null) return;
 
         if (stepIterator.hasNext()) {
-            ViewStep next = stepIterator.next();
+            Cam360.ViewStep next = stepIterator.next();
             client.player.setYRot(next.yaw());
             client.player.setXRot(next.pitch());
             shotIndex++;
-            delayTicks = 3; // Accommodate rendering settle frames for Vulkan pipelines
+            delayTicks = 3; 
         } else {
             client.player.setYRot(originalYaw);
             client.player.setXRot(originalPitch);
             capturing = false;
-            client.player.sendSystemMessage(Component.literal("Panorama complete! Look in screenshots360/screenshots/"));
+            
+            client.player.sendSystemMessage(Component.literal("Panorama capture sequences complete!"));
+
+            // Automatically call our PanoramaStitcher if AUTO_STITCH is checked
+            if (config.captureMode == CaptureMode.AUTO_STITCH) {
+                client.player.sendSystemMessage(Component.literal("Stitching frames asynchronously..."));
+                File rootDir = client.gameDirectory;
+                File outDir = getCustomScreenshotDir(client);
+                
+                PanoramaStitcher.stitchSimpleAsync(capturedShots, outDir, System.currentTimeMillis())
+                    .thenAccept(outputFile -> {
+                        if (client.player != null) {
+                            client.player.sendSystemMessage(Component.literal("360 Stitch Ready! Saved to: " + outputFile.getName()));
+                        }
+                    }).exceptionally(ex -> {
+                        if (client.player != null) {
+                            client.player.sendSystemMessage(Component.literal("Stitching Failed: " + ex.getMessage()));
+                        }
+                        return null;
+                    });
+            }
         }
     }
 
     private void triggerPanoramixScreenshot(Minecraft client) {
-        // Direct Mojang official target override passing the 360 subfolder base instead of gameDirectory
+        // FIXED: client.getRenderTarget() replaces the deprecated getMainRenderTarget() in version 26.2
         Screenshot.grab(
-                getCustomScreenshotDir(client).getParentFile().getParentFile(), // Trims nested dirs to let grab() append /screenshots/ naturally
-                client.getMainRenderTarget(),
-                component -> { if (client.player != null) client.player.sendSystemMessage(component); }
+                getCustomScreenshotDir(client).getParentFile().getParentFile(), 
+                client.getRenderTarget(),
+                component -> { /* Keeps the screen chat clutter completely silent during capture */ }
         );
     }
 
-    // UPDATED: Points to <minecraft_dir>/screenshots360/screenshots/
     private File getCustomScreenshotDir(Minecraft client) {
         File base360 = new File(client.gameDirectory, "screenshots360");
         return new File(base360, "screenshots");
