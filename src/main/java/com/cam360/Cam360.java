@@ -40,6 +40,7 @@ public class Cam360 implements ClientModInitializer {
         Minecraft mc = Minecraft.getInstance();
         config = Cam360Config.load(mc.gameDirectory);
 
+        // Standard 26.2 Key Category bindings
         captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.cam360.capture",
                 InputConstants.Type.KEYSYM,
@@ -79,10 +80,10 @@ public class Cam360 implements ClientModInitializer {
                 return;
             }
 
-            // FIXED LOGICFLOW: Capture the frame immediately when the settle delay ticks hit 0
+            // FIXED SEQUENCE: Grab snapshot instantly when settle delay clears
             triggerPanoramixScreenshot(client);
             awaitingScreenshotFile = true;
-            screenshotPollTicks = 40; // 2-second timeout window for IO tasks
+            screenshotPollTicks = 40; // 2-second timeout window for modern OS IO threads
         });
     }
 
@@ -116,10 +117,10 @@ public class Cam360 implements ClientModInitializer {
         stepIterator = steps.iterator();
 
         client.player.sendSystemMessage(Component.literal(
-                "Capturing panorama frames... Target: " + outDir.getAbsolutePath()
+                "Starting 360 panorama sequence... Target: " + outDir.getAbsolutePath()
         ));
 
-        // Start processing the very first milestone right away
+        // Instantly process first look direction
         rotateToNextStepOrFinish(client);
     }
 
@@ -146,26 +147,27 @@ public class Cam360 implements ClientModInitializer {
             Cam360.ViewStep next = stepIterator.next();
             client.player.setYRot(next.yaw());
             client.player.setXRot(next.pitch());
-            delayTicks = 4; // 4 ticks buffer allows chunks/angles to settle completely before grabbing frame
+            delayTicks = 4; // Buffer ticks to let Vulkan/Chunk layers render clean fields of view
         } else {
             client.player.setYRot(originalYaw);
             client.player.setXRot(originalPitch);
             capturing = false;
-            client.player.sendSystemMessage(Component.literal("Panorama capture sequences complete!"));
+            client.player.sendSystemMessage(Component.literal("Sequence complete! All frames saved."));
         }
     }
 
     private void triggerPanoramixScreenshot(Minecraft client) {
-        // FIXED TARGET DIRECTION: Passing the parent directory path tricking game into saving exactly inside /screenshots360/screenshots/screenshots/
-        File targetBase = new File(client.gameDirectory, "screenshots360/screenshots");
+        // TRICK THE ENGINE: Pass 'screenshots360/screenshots' so when Minecraft appends '/screenshots', 
+        // it lands exactly at: <minecraft_dir>/screenshots360/screenshots/screenshots
+        File baseDir = new File(client.gameDirectory, "screenshots360/screenshots");
         Screenshot.grab(
-                targetBase, 
-                client.getRenderTarget(),
-                component -> { /* Kept silent to prevent screen chat spam */ }
+                baseDir, 
+                client.getMainRenderTarget(),
+                component -> { /* Silenced to clean up text log spam */ }
         );
     }
 
-    // FIXED DIR MAPPING: Points exactly to where the files end up after Minecraft appends "/screenshots"
+    // FIXED SOURCE DIR: Matches what findNewestNewPng evaluates on disk
     private File getCustomScreenshotDir(Minecraft client) {
         return new File(client.gameDirectory, "screenshots360/screenshots/screenshots");
     }
