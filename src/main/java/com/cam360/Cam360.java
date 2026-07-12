@@ -106,7 +106,7 @@ public class Cam360 implements ClientModInitializer {
         File outDir = getCustomScreenshotDir(client);
         if (!outDir.exists()) outDir.mkdirs();
 
-        // snapshot pre-existing files so we only count newly created ones
+        // Snapshot existing PNGs so we only count new files
         File[] existing = outDir.listFiles((d, n) -> n.toLowerCase().endsWith(".png"));
         if (existing != null) {
             for (File f : existing) knownPngPaths.add(f.getAbsolutePath());
@@ -116,12 +116,12 @@ public class Cam360 implements ClientModInitializer {
         for (int i = 0; i < 8; i++) {
             steps.add(new ViewStep(originalYaw + (i * 45.0f), originalPitch));
         }
-        steps.add(new ViewStep(originalYaw, -90.0f));
-        steps.add(new ViewStep(originalYaw, 90.0f));
+        steps.add(new ViewStep(originalYaw, -90.0f)); // up
+        steps.add(new ViewStep(originalYaw, 90.0f));  // down
         stepIterator = steps.iterator();
 
         client.player.sendSystemMessage(Component.literal(
-                "Capturing panorama frames... Output: " + outDir.getAbsolutePath()
+                "Starting 360 capture... Output: " + outDir.getAbsolutePath()
         ));
     }
 
@@ -133,7 +133,7 @@ public class Cam360 implements ClientModInitializer {
             capturedShots.add(newest);
 
             if (client.player != null) {
-                client.player.sendSystemMessage(Component.literal("Cam360 saved: " + newest.getName()));
+                client.player.sendSystemMessage(Component.literal("Saved: " + newest.getName()));
             }
 
             awaitingScreenshotFile = false;
@@ -148,9 +148,7 @@ public class Cam360 implements ClientModInitializer {
             screenshotPollTicks = 0;
 
             if (client.player != null) {
-                client.player.sendSystemMessage(Component.literal(
-                        "Cam360 warning: screenshot file not detected in time."
-                ));
+                client.player.sendSystemMessage(Component.literal("Warning: screenshot file not detected in time."));
             }
 
             rotateToNextStepOrFinish(client);
@@ -162,7 +160,6 @@ public class Cam360 implements ClientModInitializer {
 
         if (stepIterator.hasNext()) {
             ViewStep step = stepIterator.next();
-
             client.player.setYRot(step.yaw);
             client.player.setXRot(step.pitch);
 
@@ -179,8 +176,8 @@ public class Cam360 implements ClientModInitializer {
             screenshotPollTicks = 0;
 
             client.player.sendSystemMessage(Component.literal(
-                    "360° Panorama completed. Saved " + capturedShots.size() + " shots to: " +
-                            getCustomScreenshotDir(client).getAbsolutePath()
+                    "Captured 360° screenshots + up/down! Saved " + capturedShots.size() +
+                            " shots to: " + getCustomScreenshotDir(client).getAbsolutePath()
             ));
         }
     }
@@ -193,12 +190,12 @@ public class Cam360 implements ClientModInitializer {
             File outDir = getCustomScreenshotDir(client);
             if (!outDir.exists()) outDir.mkdirs();
 
-            // Confirmed in your environment: grabPanoramixScreenshot(File)
+            // Confirmed signature in your environment:
             instance.grabPanoramixScreenshot(outDir);
         } catch (Throwable t) {
             if (client.player != null) {
                 client.player.sendSystemMessage(Component.literal(
-                        "Cam360 screenshot error: " + t.getClass().getSimpleName()
+                        "Screenshot error: " + t.getClass().getSimpleName()
                 ));
             }
         }
@@ -215,8 +212,8 @@ public class Cam360 implements ClientModInitializer {
         long newestTs = Long.MIN_VALUE;
 
         for (File f : files) {
-            String p = f.getAbsolutePath();
-            if (knownPngPaths.contains(p)) continue;
+            String path = f.getAbsolutePath();
+            if (knownPngPaths.contains(path)) continue;
 
             long lm = f.lastModified();
             if (lm > newestTs) {
@@ -228,6 +225,7 @@ public class Cam360 implements ClientModInitializer {
     }
 
     private File getCustomScreenshotDir(Minecraft client) {
+        // your requested path
         return new File(client.gameDirectory, "screenshots360/screenshots/screenshots");
     }
 }
