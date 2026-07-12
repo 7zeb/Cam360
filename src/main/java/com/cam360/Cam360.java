@@ -8,7 +8,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier; // Correct class for 26.2 mappings
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
@@ -47,7 +47,6 @@ public class Cam360 implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Corrected factory method using Identifier for 26.2
         miscCategory = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath("cam360", "misc")
         );
@@ -194,13 +193,10 @@ public class Cam360 implements ClientModInitializer {
             File outDir = getCustomScreenshotDir(client);
             if (!outDir.exists()) outDir.mkdirs();
 
-            // Corrected to use getMainRenderTarget() getter method 
             Screenshot.grab(
                     outDir,
-                    client.getMainRenderTarget(),
-                    msg -> {
-                        // Suppressed chat output to prevent overlapping capture alerts
-                    }
+                    client.mainRenderTarget,
+                    msg -> {}
             );
         } catch (Throwable t) {
             if (client.player != null) {
