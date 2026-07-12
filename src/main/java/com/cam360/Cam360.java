@@ -8,7 +8,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation; // 26.2 official mappings use ResourceLocation or Identifier
+import net.minecraft.resources.Identifier; // Correct class for 26.2 mappings
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
@@ -47,9 +47,9 @@ public class Cam360 implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Register key category and mapping for MC 26.2
+        // Corrected factory method using Identifier for 26.2
         miscCategory = KeyMapping.Category.register(
-                ResourceLocation.fromNamespaceAndPath("cam360", "misc")
+                Identifier.fromNamespaceAndPath("cam360", "misc")
         );
 
         captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
@@ -68,23 +68,20 @@ public class Cam360 implements ClientModInitializer {
 
             if (!capturing) return;
 
-            // Handle asynchronous file-saving wait time
             if (awaitingScreenshotFile) {
                 pollForNewScreenshot(client);
                 return;
             }
 
-            // Let the camera view finish settling before doing anything
             if (delayTicks > 0) {
                 delayTicks--;
                 return;
             }
 
-            // Once delayTicks hits 0, trigger a full screenshot for the CURRENT step position
             if (stepIterator != null) {
                 triggerFullResScreenshot(client);
                 awaitingScreenshotFile = true;
-                screenshotPollTicks = 60; // 3 seconds timeout
+                screenshotPollTicks = 60;
             }
         });
     }
@@ -109,25 +106,21 @@ public class Cam360 implements ClientModInitializer {
             for (File f : existing) knownPngPaths.add(f.getAbsolutePath());
         }
 
-        // Build the 10 structural viewpoints (8 horizontal splits + 1 up + 1 down)
         List<ViewStep> steps = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
             steps.add(new ViewStep(originalYaw + (i * 45.0f), originalPitch));
         }
-        steps.add(new ViewStep(originalYaw, -90.0f)); // Looking straight up
-        steps.add(new ViewStep(originalYaw, 90.0f));  // Looking straight down
+        steps.add(new ViewStep(originalYaw, -90.0f));
+        steps.add(new ViewStep(originalYaw, 90.0f));
         stepIterator = steps.iterator();
 
         capturing = true;
         shotIndex = 0;
 
-        if (client.player != null) {
-            client.player.sendSystemMessage(Component.literal(
-                    "Starting 360 capture... Output: " + outDir.getAbsolutePath()
-            ));
-        }
+        client.player.sendSystemMessage(Component.literal(
+                "Starting 360 capture... Output: " + outDir.getAbsolutePath()
+        ));
 
-        // Snap to the very first camera position immediately
         rotateToNextStepOrFinish(client);
     }
 
@@ -170,7 +163,7 @@ public class Cam360 implements ClientModInitializer {
             client.player.setXRot(step.pitch);
 
             shotIndex++;
-            delayTicks = 4; // Crucial: Give chunk rendering and camera positioning 4 ticks to settle
+            delayTicks = 4;
         } else {
             finishCapture(client);
         }
@@ -201,11 +194,12 @@ public class Cam360 implements ClientModInitializer {
             File outDir = getCustomScreenshotDir(client);
             if (!outDir.exists()) outDir.mkdirs();
 
+            // Corrected to use getMainRenderTarget() getter method 
             Screenshot.grab(
                     outDir,
                     client.getMainRenderTarget(),
                     msg -> {
-                        // Nullified to prevent spamming the native vanilla chat message 10 times
+                        // Suppressed chat output to prevent overlapping capture alerts
                     }
             );
         } catch (Throwable t) {
