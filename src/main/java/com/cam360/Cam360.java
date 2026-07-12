@@ -19,10 +19,7 @@ import java.util.Set;
 
 public class Cam360 implements ClientModInitializer {
     private static KeyMapping captureKey;
-    private static KeyMapping toggleModeKey;
     private static KeyMapping.Category miscCategory;
-
-    private Cam360Config config;
 
     private boolean capturing = false;
     private int delayTicks = 0;
@@ -37,31 +34,6 @@ public class Cam360 implements ClientModInitializer {
     private final List<File> capturedShots = new ArrayList<>();
     private final Set<String> knownPngPaths = new HashSet<>();
 
-    /**
-     * Inline config to avoid missing-symbol compile errors.
-     * Replace with your full config system later.
-     */
-    private static final class Cam360Config {
-        CaptureMode captureMode = CaptureMode.SEPARATE;
-
-        static Cam360Config load(File gameDir) {
-            return new Cam360Config();
-        }
-
-        void save(File gameDir) {
-            // no-op for now
-        }
-    }
-
-    private enum CaptureMode {
-        SEPARATE,
-        AUTO_STITCH;
-
-        CaptureMode next() {
-            return this == SEPARATE ? AUTO_STITCH : SEPARATE;
-        }
-    }
-
     private static final class ViewStep {
         final float yaw;
         final float pitch;
@@ -74,9 +46,6 @@ public class Cam360 implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        Minecraft mc = Minecraft.getInstance();
-        config = Cam360Config.load(mc.gameDirectory);
-
         miscCategory = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath("cam360", "misc")
         );
@@ -88,21 +57,8 @@ public class Cam360 implements ClientModInitializer {
                 miscCategory
         ));
 
-        toggleModeKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.cam360.toggle_mode",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_F11,
-                miscCategory
-        ));
-
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.level == null) return;
-
-            while (toggleModeKey.consumeClick()) {
-                config.captureMode = config.captureMode.next();
-                config.save(client.gameDirectory);
-                client.player.sendSystemMessage(Component.literal("Cam360 mode: " + config.captureMode));
-            }
 
             while (captureKey.consumeClick()) {
                 startCapture(client);
@@ -120,6 +76,7 @@ public class Cam360 implements ClientModInitializer {
                 return;
             }
 
+            // Capture previous settled view
             if (shotIndex > 0) {
                 triggerPanoramixScreenshot(client);
                 awaitingScreenshotFile = true;
@@ -149,6 +106,7 @@ public class Cam360 implements ClientModInitializer {
         File outDir = getCustomScreenshotDir(client);
         if (!outDir.exists()) outDir.mkdirs();
 
+        // snapshot pre-existing files so we only count newly created ones
         File[] existing = outDir.listFiles((d, n) -> n.toLowerCase().endsWith(".png"));
         if (existing != null) {
             for (File f : existing) knownPngPaths.add(f.getAbsolutePath());
@@ -163,8 +121,7 @@ public class Cam360 implements ClientModInitializer {
         stepIterator = steps.iterator();
 
         client.player.sendSystemMessage(Component.literal(
-                "Capturing panorama frames... Mode: " + config.captureMode +
-                        " | Output: " + outDir.getAbsolutePath()
+                "Capturing panorama frames... Output: " + outDir.getAbsolutePath()
         ));
     }
 
@@ -191,7 +148,9 @@ public class Cam360 implements ClientModInitializer {
             screenshotPollTicks = 0;
 
             if (client.player != null) {
-                client.player.sendSystemMessage(Component.literal("Cam360 warning: screenshot file not detected in time."));
+                client.player.sendSystemMessage(Component.literal(
+                        "Cam360 warning: screenshot file not detected in time."
+                ));
             }
 
             rotateToNextStepOrFinish(client);
@@ -219,28 +178,10 @@ public class Cam360 implements ClientModInitializer {
             awaitingScreenshotFile = false;
             screenshotPollTicks = 0;
 
-            if (config.captureMode == CaptureMode.AUTO_STITCH) {
-                if (capturedShots.size() < 10) {
-                    client.player.sendSystemMessage(Component.literal(
-                            "Auto-stitch skipped: only " + capturedShots.size() + "/10 frames captured."
-                    ));
-                } else {
-                    try {
-                        File panoDir = new File(client.gameDirectory, "screenshots360/360_panoramas");
-                        File stitched = PanoramaStitcher.stitchSimple(capturedShots, panoDir, System.currentTimeMillis());
-                        client.player.sendSystemMessage(Component.literal("Panorama stitched: " + stitched.getAbsolutePath()));
-                    } catch (Exception e) {
-                        client.player.sendSystemMessage(Component.literal(
-                                "Auto-stitch failed (" + e.getClass().getSimpleName() + "). Separate shots kept."
-                        ));
-                    }
-                }
-            } else {
-                client.player.sendSystemMessage(Component.literal(
-                        "360° Panorama completed. Saved " + capturedShots.size() + " shots to: " +
-                                getCustomScreenshotDir(client).getAbsolutePath()
-                ));
-            }
+            client.player.sendSystemMessage(Component.literal(
+                    "360° Panorama completed. Saved " + capturedShots.size() + " shots to: " +
+                            getCustomScreenshotDir(client).getAbsolutePath()
+            ));
         }
     }
 
@@ -252,8 +193,7 @@ public class Cam360 implements ClientModInitializer {
             File outDir = getCustomScreenshotDir(client);
             if (!outDir.exists()) outDir.mkdirs();
 
-            // confirmed signature from your CI log:
-            // grabPanoramixScreenshot(File)
+            // Confirmed in your environment: grabPanoramixScreenshot(File)
             instance.grabPanoramixScreenshot(outDir);
         } catch (Throwable t) {
             if (client.player != null) {
