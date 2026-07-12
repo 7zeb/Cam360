@@ -193,10 +193,13 @@ public class Cam360 implements ClientModInitializer {
             File outDir = getCustomScreenshotDir(client);
             if (!outDir.exists()) outDir.mkdirs();
 
+            // Corrected: Uses the formal getter method invocation
             Screenshot.grab(
                     outDir,
-                    client.mainRenderTarget,
-                    msg -> {}
+                    client.getMainRenderTarget(),
+                    msg -> {
+                        // Suppressed chat logs to prevent rapid automated alert spamming
+                    }
             );
         } catch (Throwable t) {
             if (client.player != null) {
