@@ -1,3 +1,5 @@
+# The mod currently does not work on any 26.x release, Cam360 v2.0 has had bugs in it
+
 ## This mod may or may not need to be updated for the upcoming transation from OpenGL - Vulkan for Minecraft.
 
 # Cam360
