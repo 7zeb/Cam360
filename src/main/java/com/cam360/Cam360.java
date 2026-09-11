@@ -8,7 +8,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation; // Fixed import path
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
@@ -20,18 +20,14 @@ import java.util.Set;
 
 public class Cam360 implements ClientModInitializer {
     private static KeyMapping captureKey;
-    private static KeyMapping.Category miscCategory;
-
     private boolean capturing = false;
     private int delayTicks = 0;
     private Iterator<ViewStep> stepIterator;
     private float originalYaw;
     private float originalPitch;
     private int shotIndex = 0;
-
     private boolean awaitingScreenshotFile = false;
     private int screenshotPollTicks = 0;
-
     private final List<File> capturedShots = new ArrayList<>();
     private final Set<String> knownPngPaths = new HashSet<>();
 
@@ -47,15 +43,12 @@ public class Cam360 implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        miscCategory = KeyMapping.Category.register(
-                Identifier.fromNamespaceAndPath("cam360", "misc")
-        );
-
+        // Register key directly using string category identifiers to match modern Fabric implementation standards
         captureKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.cam360.capture",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_F12,
-                miscCategory
+                "category.cam360.misc"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -93,7 +86,6 @@ public class Cam360 implements ClientModInitializer {
         awaitingScreenshotFile = false;
         screenshotPollTicks = 0;
         shotIndex = 0;
-
         originalYaw = client.player.getYRot();
         originalPitch = client.player.getXRot();
 
@@ -111,8 +103,8 @@ public class Cam360 implements ClientModInitializer {
         }
         steps.add(new ViewStep(originalYaw, -90.0f));
         steps.add(new ViewStep(originalYaw, 90.0f));
-        stepIterator = steps.iterator();
 
+        stepIterator = steps.iterator();
         capturing = true;
         shotIndex = 0;
 
@@ -125,7 +117,6 @@ public class Cam360 implements ClientModInitializer {
 
     private void pollForNewScreenshot(Minecraft client) {
         File newest = findNewestNewPng(client);
-
         if (newest != null) {
             knownPngPaths.add(newest.getAbsolutePath());
             capturedShots.add(newest);
@@ -144,11 +135,9 @@ public class Cam360 implements ClientModInitializer {
         if (screenshotPollTicks <= 0) {
             awaitingScreenshotFile = false;
             screenshotPollTicks = 0;
-
             if (client.player != null) {
                 client.player.sendSystemMessage(Component.literal("Warning: Angle " + shotIndex + " screenshot save timeout."));
             }
-
             rotateToNextStepOrFinish(client);
         }
     }
@@ -160,9 +149,8 @@ public class Cam360 implements ClientModInitializer {
             ViewStep step = stepIterator.next();
             client.player.setYRot(step.yaw);
             client.player.setXRot(step.pitch);
-
             shotIndex++;
-            delayTicks = 4;
+            delayTicks = 4; 
         } else {
             finishCapture(client);
         }
@@ -172,13 +160,10 @@ public class Cam360 implements ClientModInitializer {
         if (client.player != null) {
             client.player.setYRot(originalYaw);
             client.player.setXRot(originalPitch);
-
             client.player.sendSystemMessage(Component.literal(
-                    "360 Capture complete! Saved " + capturedShots.size() + " files to: " +
-                            getCustomScreenshotDir(client).getAbsolutePath()
+                    "360 Capture complete! Saved " + capturedShots.size() + " files to: " + getCustomScreenshotDir(client).getAbsolutePath()
             ));
         }
-
         capturing = false;
         delayTicks = 0;
         stepIterator = null;
@@ -193,14 +178,14 @@ public class Cam360 implements ClientModInitializer {
             File outDir = getCustomScreenshotDir(client);
             if (!outDir.exists()) outDir.mkdirs();
 
-            // Corrected: Uses the formal getter method invocation
-            Screenshot.grab(
-                    outDir,
+            // Wrapped execution to prevent main loop race conditions 
+            client.execute(() -> {
+                Screenshot.grab(
+                    client.gameDirectory,
                     client.getMainRenderTarget(),
-                    msg -> {
-                        // Suppressed chat logs to prevent rapid automated alert spamming
-                    }
-            );
+                    msg -> { /* Chat log output suppression */ }
+                );
+            });
         } catch (Throwable t) {
             if (client.player != null) {
                 client.player.sendSystemMessage(Component.literal(
